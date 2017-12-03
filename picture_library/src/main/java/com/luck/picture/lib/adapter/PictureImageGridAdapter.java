@@ -168,11 +168,14 @@ public class PictureImageGridAdapter extends RecyclerView.Adapter<RecyclerView.V
             contentHolder.tv_isGif.setVisibility(gif ? View.VISIBLE : View.GONE);
             if (mimeType == PictureMimeType.ofAudio()) {
                 contentHolder.tv_duration.setVisibility(View.VISIBLE);
+                contentHolder.tv_title.setVisibility(View.VISIBLE);
+                contentHolder.tv_title.setText(getFileName(image.getPath()));
                 Drawable drawable = ContextCompat.getDrawable(context, R.drawable.picture_audio);
                 StringUtils.modifyTextViewDrawable(contentHolder.tv_duration, drawable, 0);
             } else {
                 Drawable drawable = ContextCompat.getDrawable(context, R.drawable.video_icon);
                 StringUtils.modifyTextViewDrawable(contentHolder.tv_duration, drawable, 0);
+                contentHolder.tv_title.setVisibility(View.GONE);
                 contentHolder.tv_duration.setVisibility(picture == PictureConfig.TYPE_VIDEO
                         ? View.VISIBLE : View.GONE);
             }
@@ -242,6 +245,16 @@ public class PictureImageGridAdapter extends RecyclerView.Adapter<RecyclerView.V
         }
     }
 
+    public static String getFileName(String fullPath) {
+        if (TextUtils.isEmpty(fullPath)) {
+            return "";
+        }
+        int index = fullPath.lastIndexOf("/");
+        if (index < 0) {
+            return "";
+        }
+        return fullPath.substring(index + 1);
+    }
 
     @Override
     public int getItemCount() {
@@ -266,6 +279,7 @@ public class PictureImageGridAdapter extends RecyclerView.Adapter<RecyclerView.V
     public class ViewHolder extends RecyclerView.ViewHolder {
         ImageView iv_picture;
         TextView check;
+        TextView tv_title;
         TextView tv_duration, tv_isGif, tv_long_chart;
         View contentView;
         LinearLayout ll_check;
@@ -276,6 +290,7 @@ public class PictureImageGridAdapter extends RecyclerView.Adapter<RecyclerView.V
             iv_picture = (ImageView) itemView.findViewById(R.id.iv_picture);
             check = (TextView) itemView.findViewById(R.id.check);
             ll_check = (LinearLayout) itemView.findViewById(R.id.ll_check);
+            tv_title = (TextView) itemView.findViewById(R.id.tv_title);
             tv_duration = (TextView) itemView.findViewById(R.id.tv_duration);
             tv_isGif = (TextView) itemView.findViewById(R.id.tv_isGif);
             tv_long_chart = (TextView) itemView.findViewById(R.id.tv_long_chart);

@@ -30,6 +30,17 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/tv_title"
+        android:paddingLeft="5dp"
+        android:paddingTop="27dp"
+        android:paddingRight="5dp"
+        android:textColor="@color/white"
+        android:maxLines="3"
+        android:textSize="11sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
         android:id="@+id/tv_isGif"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
