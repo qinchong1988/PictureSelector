@@ -86,14 +86,12 @@ public class PictureBaseActivity extends FragmentActivity {
         if (selectionMedias == null) {
             selectionMedias = new ArrayList<>();
         }
-        if (config.selectionMode == PictureConfig.SINGLE) {
-            selectionMedias = new ArrayList<>();
-        }
     }
 
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
         outState.putString(PictureConfig.BUNDLE_CAMERA_PATH, cameraPath);
         outState.putString(PictureConfig.BUNDLE_ORIGINAL_PATH, originalPath);
         outState.putParcelable(PictureConfig.EXTRA_CONFIG, config);
@@ -118,7 +116,7 @@ public class PictureBaseActivity extends FragmentActivity {
     }
 
     protected void showToast(String msg) {
-        Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -264,6 +262,9 @@ public class PictureBaseActivity extends FragmentActivity {
         options.setCircleDimmedLayer(config.circleDimmedLayer);
         options.setShowCropFrame(config.showCropFrame);
         options.setShowCropGrid(config.showCropGrid);
+        options.setDragFrameEnabled(config.isDragFrame);
+        options.setScaleEnabled(config.scaleEnabled);
+        options.setRotateEnabled(config.rotateEnabled);
         options.setCompressionQuality(config.cropCompressQuality);
         options.setHideBottomControls(config.hideBottomControls);
         options.setFreeStyleCropEnabled(config.freeStyleCropEnabled);
@@ -293,6 +294,7 @@ public class PictureBaseActivity extends FragmentActivity {
         options.setToolbarWidgetColor(titleColor);
         options.setCircleDimmedLayer(config.circleDimmedLayer);
         options.setShowCropFrame(config.showCropFrame);
+        options.setDragFrameEnabled(config.isDragFrame);
         options.setShowCropGrid(config.showCropGrid);
         options.setScaleEnabled(config.scaleEnabled);
         options.setRotateEnabled(config.rotateEnabled);

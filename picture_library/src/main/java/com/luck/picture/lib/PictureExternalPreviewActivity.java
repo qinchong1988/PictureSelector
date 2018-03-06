@@ -15,7 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -36,7 +35,6 @@ import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.permissions.RxPermissions;
 import com.luck.picture.lib.photoview.OnViewTapListener;
 import com.luck.picture.lib.photoview.PhotoView;
-import com.luck.picture.lib.tools.DebugUtil;
 import com.luck.picture.lib.tools.PictureFileUtils;
 import com.luck.picture.lib.tools.ScreenUtils;
 import com.luck.picture.lib.widget.PreviewViewPager;
@@ -211,10 +209,6 @@ public class PictureExternalPreviewActivity extends PictureBaseActivity implemen
                                     if (eqLongImg) {
                                         displayLongPic(resource, longImg);
                                     } else {
-                                        // 适配有些手机 图片不能充满全屏
-                                        if (resource.getWidth() > 480 && resource.getHeight() > 1080) {
-                                            imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                                        }
                                         imageView.setImageBitmap(resource);
                                     }
                                 }
@@ -373,8 +367,6 @@ public class PictureExternalPreviewActivity extends PictureBaseActivity implemen
                 bout.write(buffer, 0, read);
                 ava += read;
                 long speed = ava / (System.currentTimeMillis() - start);
-                DebugUtil.i("Download: " + ava + " byte(s)"
-                        + "    avg speed: " + speed + "  (kb/s)");
             }
             bout.flush();
             bout.close();
