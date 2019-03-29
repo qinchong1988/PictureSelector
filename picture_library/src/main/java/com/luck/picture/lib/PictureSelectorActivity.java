@@ -42,10 +42,10 @@ import com.luck.picture.lib.rxbus2.Subscribe;
 import com.luck.picture.lib.rxbus2.ThreadMode;
 import com.luck.picture.lib.tools.DateUtils;
 import com.luck.picture.lib.tools.DoubleUtils;
-import com.luck.picture.lib.tools.LightStatusBarUtils;
 import com.luck.picture.lib.tools.PictureFileUtils;
 import com.luck.picture.lib.tools.ScreenUtils;
 import com.luck.picture.lib.tools.StringUtils;
+import com.luck.picture.lib.tools.ToastManage;
 import com.luck.picture.lib.widget.FolderPopWindow;
 import com.luck.picture.lib.widget.PhotoPopupWindow;
 import com.yalantis.ucrop.UCrop;
@@ -71,12 +71,11 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
     private final static String TAG = PictureSelectorActivity.class.getSimpleName();
     private static final int SHOW_DIALOG = 0;
     private static final int DISMISS_DIALOG = 1;
-    private static final int STATUSBAR = 2;
     private ImageView picture_left_back;
     private TextView picture_title, picture_right, picture_tv_ok, tv_empty,
             picture_tv_img_num, picture_id_preview, tv_PlayPause, tv_Stop, tv_Quit,
             tv_musicStatus, tv_musicTotal, tv_musicTime;
-    private RelativeLayout rl_picture_title, rl_bottom;
+    private RelativeLayout rl_picture_title;
     private LinearLayout id_ll_ok;
     private RecyclerView picture_recycler;
     private PictureImageGridAdapter adapter;
@@ -104,14 +103,15 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                 case DISMISS_DIALOG:
                     dismissDialog();
                     break;
-                case STATUSBAR:
-                    LightStatusBarUtils.setLightStatusBar(PictureSelectorActivity.this, statusFont);
-                    break;
             }
         }
     };
 
-    //EventBus 3.0 回调
+    /**
+     * EventBus 3.0 回调
+     *
+     * @param obj
+     */
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void eventBus(EventEntity obj) {
         switch (obj.what) {
@@ -123,6 +123,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                 Log.i("刷新下标:", String.valueOf(position));
                 adapter.bindSelectImages(selectImages);
                 adapter.notifyItemChanged(position);
+
                 break;
             case PictureConfig.PREVIEW_DATA_FLAG:
                 List<LocalMedia> medias = obj.medias;
@@ -147,9 +148,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
             RxBus.getDefault().register(this);
         }
         rxPermissions = new RxPermissions(this);
-        mHandler.sendEmptyMessage(STATUSBAR);
         if (config.camera) {
-            setTheme(R.style.activity_Theme_Transparent);
             if (savedInstanceState == null) {
                 rxPermissions.request(Manifest.permission.READ_EXTERNAL_STORAGE)
                         .subscribe(new Observer<Boolean>() {
@@ -162,7 +161,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                                 if (aBoolean) {
                                     onTakePhoto();
                                 } else {
-                                    showToast(getString(R.string.picture_camera));
+                                    ToastManage.s(mContext, getString(R.string.picture_camera));
                                     closeActivity();
                                 }
                             }
@@ -199,7 +198,6 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
         picture_id_preview = (TextView) findViewById(R.id.picture_id_preview);
         picture_tv_img_num = (TextView) findViewById(R.id.picture_tv_img_num);
         picture_recycler = (RecyclerView) findViewById(R.id.picture_recycler);
-        rl_bottom = (RelativeLayout) findViewById(R.id.rl_bottom);
         id_ll_ok = (LinearLayout) findViewById(R.id.id_ll_ok);
         tv_empty = (TextView) findViewById(R.id.tv_empty);
         isNumComplete(numComplete);
@@ -247,7 +245,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                             mHandler.sendEmptyMessage(SHOW_DIALOG);
                             readLocalMedia();
                         } else {
-                            showToast(getString(R.string.picture_jurisdiction));
+                            ToastManage.s(mContext, getString(R.string.picture_jurisdiction));
                         }
                     }
 
@@ -415,16 +413,10 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                 if (aBoolean) {
                     Intent cameraIntent = new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION);
                     if (cameraIntent.resolveActivity(getPackageManager()) != null) {
-                        File cameraFile = PictureFileUtils.createCameraFile
-                                (PictureSelectorActivity.this, config.mimeType,
-                                        outputCameraPath, config.suffixType);
-                        cameraPath = cameraFile.getAbsolutePath();
-                        Uri imageUri = parUri(cameraFile);
-                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                         startActivityForResult(cameraIntent, PictureConfig.REQUEST_CAMERA);
                     }
                 } else {
-                    showToast(getString(R.string.picture_audio));
+                    ToastManage.s(mContext, getString(R.string.picture_audio));
                 }
             }
 
@@ -506,7 +498,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                 if (size < config.minSelectNum) {
                     String str = eqImg ? getString(R.string.picture_min_img_num, config.minSelectNum)
                             : getString(R.string.picture_min_video_num, config.minSelectNum);
-                    showToast(str);
+                    ToastManage.s(mContext, str);
                     return;
                 }
             }
@@ -760,7 +752,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                 if (aBoolean) {
                     startCamera();
                 } else {
-                    showToast(getString(R.string.picture_camera));
+                    ToastManage.s(mContext, getString(R.string.picture_camera));
                     if (config.camera) {
                         closeActivity();
                     }
@@ -939,7 +931,9 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
                     handlerResult(medias);
                     break;
                 case PictureConfig.REQUEST_CAMERA:
-                    isAudio(data);
+                    if (config.mimeType == PictureMimeType.ofAudio()) {
+                        cameraPath = getAudioPath(data);
+                    }
                     // on take photo success
                     final File file = new File(cameraPath);
                     sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
@@ -1033,7 +1027,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
             }
         } else if (resultCode == UCrop.RESULT_ERROR) {
             Throwable throwable = (Throwable) data.getSerializableExtra(UCrop.EXTRA_ERROR);
-            showToast(throwable.getMessage());
+            ToastManage.s(mContext, throwable.getMessage());
         }
     }
 

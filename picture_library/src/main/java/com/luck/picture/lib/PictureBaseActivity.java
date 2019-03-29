@@ -13,7 +13,6 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
-import android.widget.Toast;
 
 import com.luck.picture.lib.compress.Luban;
 import com.luck.picture.lib.compress.OnCompressListener;
@@ -24,6 +23,7 @@ import com.luck.picture.lib.dialog.PictureDialog;
 import com.luck.picture.lib.entity.EventEntity;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.entity.LocalMediaFolder;
+import com.luck.picture.lib.immersive.ImmersiveManage;
 import com.luck.picture.lib.rxbus2.RxBus;
 import com.luck.picture.lib.tools.AttrsUtils;
 import com.luck.picture.lib.tools.DateUtils;
@@ -42,16 +42,41 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
-
+/**
+ * @author：luck
+ * @data：2018/3/28 下午1:00
+ * @描述: Activity基类
+ */
 public class PictureBaseActivity extends FragmentActivity {
     protected Context mContext;
     protected PictureSelectionConfig config;
-    protected boolean statusFont, previewStatusFont, numComplete;
+    protected boolean openWhiteStatusBar, numComplete;
+    protected int colorPrimary, colorPrimaryDark;
     protected String cameraPath, outputCameraPath;
     protected String originalPath;
     protected PictureDialog dialog;
     protected PictureDialog compressDialog;
     protected List<LocalMedia> selectionMedias;
+
+    /**
+     * 是否使用沉浸式，子类复写该方法来确定是否采用沉浸式
+     *
+     * @return 是否沉浸式，默认true
+     */
+    @Override
+    public boolean isImmersive() {
+        return true;
+    }
+
+    /**
+     * 具体沉浸的样式，可以根据需要自行修改状态栏和导航栏的颜色
+     */
+    public void immersive() {
+        ImmersiveManage.immersiveAboveAPI23(this
+                , colorPrimaryDark
+                , colorPrimary
+                , openWhiteStatusBar);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +92,9 @@ public class PictureBaseActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         mContext = this;
         initConfig();
+        if (isImmersive()) {
+            immersive();
+        }
     }
 
     /**
@@ -74,20 +102,25 @@ public class PictureBaseActivity extends FragmentActivity {
      */
     private void initConfig() {
         outputCameraPath = config.outputCameraPath;
-        statusFont = AttrsUtils.getTypeValueBoolean
+        // 是否开启白色状态栏
+        openWhiteStatusBar = AttrsUtils.getTypeValueBoolean
                 (this, R.attr.picture_statusFontColor);
-        previewStatusFont = AttrsUtils.getTypeValueBoolean
-                (this, R.attr.picture_preview_statusFontColor);
+        // 是否是0/9样式
         numComplete = AttrsUtils.getTypeValueBoolean(this,
                 R.attr.picture_style_numComplete);
+        // 是否开启数字勾选模式
         config.checkNumMode = AttrsUtils.getTypeValueBoolean
                 (this, R.attr.picture_style_checkNumMode);
+        // 标题栏背景色
+        colorPrimary = AttrsUtils.getTypeValueColor(this, R.attr.colorPrimary);
+        // 状态栏背景色
+        colorPrimaryDark = AttrsUtils.getTypeValueColor(this, R.attr.colorPrimaryDark);
+        // 已选图片列表
         selectionMedias = config.selectionMedias;
         if (selectionMedias == null) {
             selectionMedias = new ArrayList<>();
         }
     }
-
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -113,10 +146,6 @@ public class PictureBaseActivity extends FragmentActivity {
             intent.putExtras(bundle);
             startActivityForResult(intent, requestCode);
         }
-    }
-
-    protected void showToast(String msg) {
-        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -233,7 +262,8 @@ public class PictureBaseActivity extends FragmentActivity {
     private void handleCompressCallBack(List<LocalMedia> images, List<File> files) {
         if (files.size() == images.size()) {
             for (int i = 0, j = images.size(); i < j; i++) {
-                String path = files.get(i).getPath();// 压缩成功后的地址
+                // 压缩成功后的地址
+                String path = files.get(i).getPath();
                 LocalMedia image = images.get(i);
                 // 如果是网络图片则不压缩
                 boolean http = PictureMimeType.isHttp(path);
@@ -494,21 +524,24 @@ public class PictureBaseActivity extends FragmentActivity {
      *
      * @param data
      */
-    protected void isAudio(Intent data) {
+    protected String getAudioPath(Intent data) {
+        boolean compare_SDK_19 = Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT;
         if (data != null && config.mimeType == PictureMimeType.ofAudio()) {
             try {
                 Uri uri = data.getData();
-                String audioPath;
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
+                final String audioPath;
+                if (compare_SDK_19) {
                     audioPath = uri.getPath();
                 } else {
                     audioPath = getAudioFilePathFromUri(uri);
                 }
-                PictureFileUtils.copyAudioFile(audioPath, cameraPath);
+                return audioPath;
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        return "";
     }
 
     /**

@@ -1,9 +1,11 @@
 package com.luck.picture.lib.config;
 
 
+import android.content.Context;
 import android.media.MediaMetadataRetriever;
 import android.text.TextUtils;
 
+import com.luck.picture.lib.R;
 import com.luck.picture.lib.entity.LocalMedia;
 
 import java.io.File;
@@ -14,6 +16,7 @@ import java.io.File;
  * package：com.luck.picture.lib.config
  * email：893855882@qq.com
  * data：2017/5/24
+ * @author luck
  */
 
 public final class PictureMimeType {
@@ -295,6 +298,26 @@ public final class PictureMimeType {
         } catch (Exception e) {
             e.printStackTrace();
             return ".png";
+        }
+    }
+
+    /**
+     * 根据不同的类型，返回不同的错误提示
+     *
+     * @param mediaMimeType
+     * @return
+     */
+    public static String s(Context context, int mediaMimeType) {
+        Context ctx = context.getApplicationContext();
+        switch (mediaMimeType) {
+            case PictureConfig.TYPE_IMAGE:
+                return ctx.getString(R.string.picture_error);
+            case PictureConfig.TYPE_VIDEO:
+                return ctx.getString(R.string.picture_video_error);
+            case PictureConfig.TYPE_AUDIO:
+                return ctx.getString(R.string.picture_audio_error);
+            default:
+                return ctx.getString(R.string.picture_error);
         }
     }
 
